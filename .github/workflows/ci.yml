@@ -19,18 +19,17 @@ jobs:
         run: deno lint
       - name: Deno Formatter Checker
         run: deno lint
-
-  release:
-    if: ${{ github.ref == 'refs/heads/main' }}
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Create a GitHub tag
-        id: tag_version
-        uses: mathieudutour/github-tag-action@v6.0
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+# release:
+#   if: ${{ github.ref == 'refs/heads/main' }}
+#   needs: build
+#   runs-on: ubuntu-latest
+#   steps:
+#     - uses: actions/checkout@v2
+#     - name: Create a GitHub tag
+#       id: tag_version
+#       uses: mathieudutour/github-tag-action@v6.0
+#       with:
+#         github_token: ${{ secrets.GITHUB_TOKEN }}
 #      - name: Create a GitHub release
 #        uses: ncipollo/release-action@v1
 #        with:
@@ -38,4 +37,3 @@ jobs:
 #          name: ${{ steps.tag_version.outputs.new_tag }}
 #          generateReleaseNotes: true
 #          body: "###### *Generated changelog:*\n${{ steps.tag_version.outputs.changelog }}"
-
