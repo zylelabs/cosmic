@@ -1,0 +1,41 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        deno-version: [v1.x]
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v3
+      - name: Setup Deno (${{ matrix.deno-version }})
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: ${{ matrix.deno-version }}
+      - name: Deno Linter
+        run: deno lint
+      - name: Deno Formatter Checker
+        run: deno lint
+
+  release:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Bump version and push tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create a GitHub release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.tag_version.outputs.new_tag }}
+          name: ${{ steps.tag_version.outputs.new_tag }}
+          generateReleaseNotes: true
+          body: "###### *Generated changelog:*\n${{ steps.tag_version.outputs.changelog }}"
+
