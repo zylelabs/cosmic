@@ -1,4 +1,4 @@
-# Readme
+# 🪐 Cosmic - Deno Web Framework 🪐
 
 Minimalist & fast web framework for Deno 🦕💫
 

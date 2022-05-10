@@ -1,16 +1,35 @@
 // deno-lint-ignore-file no-explicit-any
-export interface IRouter {
+export interface RouterBody {
 	path: string;
 	method: string;
-	handler: (...args: any[]) => void;
+	middleware?: Middleware;
+	handler: Callback;
 }
 
-export class Router {
-	private routes: IRouter[] = [];
+export type Next = (arg?: any) => void;
 
-	public get(path: string, callback: (...args: any[]) => void) {
-		const route: IRouter = { path, method: 'GET', handler: callback };
+type Middleware = (req: any, res: any, next: Next) => Next;
+
+type Callback = (...args: any[]) => void;
+
+export class Router {
+	private routes: RouterBody[] = [];
+
+	public get(path: string, callback: Callback): void;
+	public get(path: string, middleware: Middleware | Callback, callback?: Callback): void;
+	public get(path: string, middleware: Middleware | Callback, callback?: Callback): RouterBody {
+		const callbackResponse = callback === undefined ? middleware : callback!;
+		const middlewareResponse = callback === undefined ? undefined : (middleware as Middleware);
+
+		const route: RouterBody = {
+			path,
+			method: 'GET',
+			middleware: middlewareResponse,
+			handler: (callbackResponse as Callback),
+		};
+
 		this.routes.push(route);
+
 		return route;
 	}
 
