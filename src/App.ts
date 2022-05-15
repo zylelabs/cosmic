@@ -5,19 +5,23 @@ interface ListenOptions {
 	hostname?: string;
 }
 
-const ListenOptionsDefault = {
-	port: 3000,
-	hostname: '0.0.0.0',
-};
+type ListenCallback = (options: ListenOptions) => void;
 
 export class App extends Router {
-	public listen(options?: ListenOptions, callback?: (options: ListenOptions) => void) {
-		const serverOptions = { ...ListenOptionsDefault, ...options };
-		const server = Deno.listen(serverOptions);
+	public listen(port: number, hostname: string | ListenCallback, callback?: ListenCallback) {
+		const normalizeHostname = callback === undefined ? '0.0.0.0' : hostname;
+		const serverOptions = {
+			...{ port: 3000, hostname: '0.0.0.0' },
+			...{ port: port, hostname: (normalizeHostname as string) },
+		};
 
-		this.serve(server);
+		this.serve(Deno.listen(serverOptions));
 
-		callback?.(serverOptions);
+		if (callback === undefined) {
+			(hostname as ListenCallback)(serverOptions);
+		} else {
+			callback?.(serverOptions);
+		}
 	}
 
 	private async serve(server: Deno.Listener) {

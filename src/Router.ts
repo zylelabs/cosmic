@@ -15,8 +15,6 @@ type Callback = (...args: any[]) => void;
 export class Router {
 	private routes: RouterBody[] = [];
 
-	public get(path: string, callback: Callback): void;
-	public get(path: string, middleware: Middleware | Callback, callback?: Callback): void;
 	public get(path: string, middleware: Middleware | Callback, callback?: Callback): RouterBody {
 		const callbackResponse = callback === undefined ? middleware : callback!;
 		const middlewareResponse = callback === undefined ? undefined : (middleware as Middleware);
