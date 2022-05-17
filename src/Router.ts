@@ -6,11 +6,25 @@ export interface RouterBody {
 	handler: Callback;
 }
 
+export interface RequestCosmic {
+	request: Request;
+	middleware?: Middleware;
+}
+
+export interface ResponseCosmic {
+	status: (statusCode: number) => Omit<ResponseCosmic, 'status'>;
+	send: Send;
+}
+
+type Send = (body: Body) => void;
+
+export type Body = BodyInit | JSON | Record<string, string> | null | undefined;
+
 export type Next = (arg?: any) => void;
 
-type Middleware = (req: any, res: any, next: Next) => Next;
+export type Middleware = (req: Request, res: ResponseCosmic, next: Next) => Next;
 
-type Callback = (...args: any[]) => void;
+type Callback = (req: RequestCosmic, res: ResponseCosmic) => void;
 
 export class Router {
 	private routes: RouterBody[] = [];
