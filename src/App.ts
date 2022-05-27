@@ -59,9 +59,12 @@ export class App extends Router {
 		let isNext = true;
 
 		for (const r of this.getRoutes()) {
-			if (`${url.pathname}/`.match(`${r.path}/`)) {
+			if (
+				(`${url.pathname}/`.match(`${r.path}/`)) &&
+				(r.method === req.method || r.method === 'ALL')
+			) {
 				if (r.middleware) {
-					r.middleware(req, res, (next) => {
+					r.middleware({ request: req }, res, (next) => {
 						next === undefined ? isNext = true : isNext = next;
 					});
 				}
