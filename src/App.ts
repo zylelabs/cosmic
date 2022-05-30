@@ -64,7 +64,7 @@ export class App extends Router {
 				(r.method === req.method || r.method === 'ALL')
 			) {
 				if (r.middleware) {
-					r.middleware({ request: req }, res, (next) => {
+					r.middleware(req, res, (next) => {
 						next === undefined ? isNext = true : isNext = next;
 					});
 				}
@@ -74,10 +74,7 @@ export class App extends Router {
 				}
 
 				r.handler(
-					{
-						request: req,
-						middleware: r.middleware,
-					},
+					Object.assign(req, { middleware: r.middleware?.name }),
 					res,
 				);
 				break;

@@ -10,9 +10,10 @@ interface UseBody {
 	middleware: Middleware;
 }
 
-export interface RequestCosmic {
-	request: Request;
-	middleware?: Middleware;
+export type RequestCosmic = Request & IMiddleware;
+
+export interface IMiddleware {
+	middleware?: string;
 }
 
 export interface ResponseCosmic {
@@ -30,7 +31,7 @@ type Method =
 
 type Send = (body: Body) => void;
 
-export type Body = BodyInit | JSON | Record<string, string> | null | undefined;
+export type Body = BodyInit | JSON | Record<string | number, unknown> | null | undefined | unknown;
 
 export type Next = (pass?: boolean) => void;
 
