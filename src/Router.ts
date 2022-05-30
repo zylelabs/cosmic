@@ -20,6 +20,14 @@ export interface ResponseCosmic {
 	send: Send;
 }
 
+type Method =
+	| 'ALL'
+	| 'GET'
+	| 'POST'
+	| 'PUT'
+	| 'PATCH'
+	| 'DELETE';
+
 type Send = (body: Body) => void;
 
 export type Body = BodyInit | JSON | Record<string, string> | null | undefined;
@@ -35,25 +43,31 @@ export class Router {
 	private middlewares: UseBody[] = [];
 
 	public get(path: string, middleware: Middleware | Callback, callback?: Callback): RouterBody {
-		const callbackResponse = callback === undefined ? middleware : callback!;
-		const middlewareResponse = callback === undefined ? undefined : (middleware as Middleware);
+		return this.request('GET', path, middleware, callback);
+	}
 
-		const route: RouterBody = {
-			path,
-			method: 'GET',
-			middleware: middlewareResponse,
-			handler: (callbackResponse as Callback),
-		};
+	public post(path: string, middleware: Middleware | Callback, callback?: Callback): RouterBody {
+		return this.request('POST', path, middleware, callback);
+	}
 
-		this.middlewares.forEach((middleware) => {
-			if (middleware.path === path) {
-				route.middleware = middleware.middleware;
-			}
-		})
+	public put(path: string, middleware: Middleware | Callback, callback?: Callback): RouterBody {
+		return this.request('PUT', path, middleware, callback);
+	}
 
-		this.routes.push(route);
+	public patch(path: string, middleware: Middleware | Callback, callback?: Callback): RouterBody {
+		return this.request('PATCH', path, middleware, callback);
+	}
 
-		return route;
+	public delete(
+		path: string,
+		middleware: Middleware | Callback,
+		callback?: Callback,
+	): RouterBody {
+		return this.request('DELETE', path, middleware, callback);
+	}
+
+	public all(path: string, middleware: Middleware | Callback, callback?: Callback): RouterBody {
+		return this.request('ALL', path, middleware, callback);
 	}
 
 	public use(path: string, middleware: Middleware): UseBody {
@@ -66,11 +80,42 @@ export class Router {
 		} else {
 			this.middlewares.push({
 				path,
-				middleware
-			})
+				middleware,
+			});
 		}
 
 		return useBody;
+	}
+
+	private request(
+		method: Method,
+		path: string,
+		middleware: Middleware | Callback,
+		callback?: Callback,
+	): RouterBody {
+		const callbackResponse = callback === undefined ? middleware : callback!;
+		const middlewareResponse = callback === undefined ? undefined : (middleware as Middleware);
+
+		const route: RouterBody = {
+			path,
+			method: method,
+			middleware: undefined,
+			handler: (callbackResponse as Callback),
+		};
+
+		this.middlewares.forEach((middleware) => {
+			if (middleware.path === path) {
+				route.middleware = middleware.middleware;
+			}
+		});
+
+		if (middlewareResponse) {
+			route.middleware = middlewareResponse;
+		}
+
+		this.routes.push(route);
+
+		return route;
 	}
 
 	public registerRouter(router: Router) {
