@@ -1,11 +1,6 @@
-import { Router } from './Router.ts';
+import { Body, ResponseCosmic, Router } from './Router.ts';
 
-interface ListenOptions {
-	port?: number;
-	hostname?: string;
-}
-
-type ListenCallback = (options: ListenOptions) => void;
+type ListenCallback = (options: { port?: number; hostname?: string }) => void;
 
 export class App extends Router {
 	public listen(port: number, hostname: string | ListenCallback, callback?: ListenCallback) {
@@ -46,22 +41,30 @@ export class App extends Router {
 	private handler(req: Request): Response {
 		const url = new URL(req.url);
 
-		let res = {};
+		let body: Body;
+		let status = 200;
 
-		res = {
-			path: url.pathname,
-			error: 'Not Found',
-			statusCode: 404,
+		const res: ResponseCosmic = {
+			status: (statusCode: number) => {
+				status = statusCode;
+				return res;
+			},
+			send: (bodyResponse: Body) => {
+				body = typeof bodyResponse === 'object'
+					? JSON.stringify(bodyResponse)
+					: bodyResponse;
+			},
 		};
 
 		let isNext = true;
 
 		for (const r of this.getRoutes()) {
-			if (`${url.pathname}/`.match(`${r.path}/`)) {
-				res = {};
-
+			if (
+				(`${url.pathname}/`.match(`${r.path}/`)) &&
+				(r.method === req.method || r.method === 'ALL')
+			) {
 				if (r.middleware) {
-					r.middleware(req, res, (next) => {
+					r.middleware({ request: req }, res, (next) => {
 						next === undefined ? isNext = true : isNext = next;
 					});
 				}
@@ -72,17 +75,14 @@ export class App extends Router {
 
 				r.handler(
 					{
-						headers: req.headers,
+						request: req,
 						middleware: r.middleware,
-						method: req.method,
-						url: req.url,
 					},
 					res,
 				);
 				break;
 			}
 		}
-
-		return new Response(JSON.stringify(res), { status: 200 });
+		return new Response(body as BodyInit, { status: status });
 	}
 }
