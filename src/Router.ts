@@ -18,7 +18,8 @@ export interface IMiddleware {
 
 export interface ResponseCosmic {
 	status: (statusCode: number) => Omit<ResponseCosmic, 'status'>;
-	send: Send;
+	set: (obj: Record<string, string> | string, value?: string) => void;
+	send: (body: Body) => void;
 }
 
 type Method =
@@ -28,8 +29,6 @@ type Method =
 	| 'PUT'
 	| 'PATCH'
 	| 'DELETE';
-
-type Send = (body: Body) => void;
 
 export type Body = BodyInit | JSON | Record<string | number, unknown> | null | undefined | unknown;
 
