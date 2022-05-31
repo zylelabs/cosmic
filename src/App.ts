@@ -24,6 +24,7 @@ export class App extends Router {
 			for await (const conn of server) {
 				(async () => {
 					const httpConn = Deno.serveHttp(conn);
+
 					try {
 						for await (const event of httpConn) {
 							await event.respondWith(this.handler(event.request));
@@ -41,22 +42,33 @@ export class App extends Router {
 	private handler(req: Request): Response {
 		const url = new URL(req.url);
 
-		let body: Body;
-		let status = 200;
+		let isNext = true;
+
+		const objRes = {
+			body: undefined as Body,
+			status: 200,
+			headers: {} as Record<string, string>,
+		};
 
 		const res: ResponseCosmic = {
 			status: (statusCode: number) => {
-				status = statusCode;
+				objRes.status = statusCode;
 				return res;
 			},
+			set: (obj: Record<string, string> | string, value?: string) => {
+				if (typeof obj === 'object') {
+					Object.assign(objRes.headers, obj);
+					return;
+				}
+
+				objRes.headers[obj] = value as string;
+			},
 			send: (bodyResponse: Body) => {
-				body = typeof bodyResponse === 'object'
+				objRes.body = typeof bodyResponse === 'object'
 					? JSON.stringify(bodyResponse)
 					: bodyResponse;
 			},
 		};
-
-		let isNext = true;
 
 		for (const r of this.getRoutes()) {
 			if (
@@ -64,7 +76,7 @@ export class App extends Router {
 				(r.method === req.method || r.method === 'ALL')
 			) {
 				if (r.middleware) {
-					r.middleware({ request: req }, res, (next) => {
+					r.middleware(req, res, (next) => {
 						next === undefined ? isNext = true : isNext = next;
 					});
 				}
@@ -74,15 +86,15 @@ export class App extends Router {
 				}
 
 				r.handler(
-					{
-						request: req,
-						middleware: r.middleware,
-					},
+					Object.assign(req, { middleware: r.middleware?.name }),
 					res,
 				);
 				break;
 			}
 		}
-		return new Response(body as BodyInit, { status: status });
+		return new Response(objRes.body as BodyInit, {
+			status: objRes.status,
+			headers: objRes.headers,
+		});
 	}
 }

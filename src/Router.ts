@@ -10,14 +10,16 @@ interface UseBody {
 	middleware: Middleware;
 }
 
-export interface RequestCosmic {
-	request: Request;
-	middleware?: Middleware;
+export type RequestCosmic = Request & IMiddleware;
+
+export interface IMiddleware {
+	middleware?: string;
 }
 
 export interface ResponseCosmic {
 	status: (statusCode: number) => Omit<ResponseCosmic, 'status'>;
-	send: Send;
+	set: (obj: Record<string, string> | string, value?: string) => void;
+	send: (body: Body) => void;
 }
 
 type Method =
@@ -28,9 +30,7 @@ type Method =
 	| 'PATCH'
 	| 'DELETE';
 
-type Send = (body: Body) => void;
-
-export type Body = BodyInit | JSON | Record<string, string> | null | undefined;
+export type Body = BodyInit | JSON | Record<string | number, unknown> | null | undefined | unknown;
 
 export type Next = (pass?: boolean) => void;
 

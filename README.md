@@ -10,6 +10,7 @@
 - Routes and middlewares included
 
 ## Example usage
+
 ```typescript
 import { App, RequestCosmic, ResponseCosmic } from '../cosmic/mod.ts';
 
