@@ -1,4 +1,4 @@
-export interface RouterBody {
+interface RouterBody {
 	path: string;
 	method: string;
 	middleware?: Middleware;
@@ -12,7 +12,7 @@ interface UseBody {
 
 export type RequestCosmic = Request & IMiddleware;
 
-export interface IMiddleware {
+interface IMiddleware {
 	middleware?: string;
 }
 
