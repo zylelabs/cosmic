@@ -43,6 +43,7 @@ export class App extends Router {
 		const url = new URL(req.url);
 
 		let isNext = true;
+		let isRoute = false;
 
 		const objRes = {
 			body: undefined as Body,
@@ -70,28 +71,47 @@ export class App extends Router {
 			},
 		};
 
-		for (const r of this.getRoutes()) {
-			if (
-				(`${url.pathname}/`.match(`${r.path}/`)) &&
-				(r.method === req.method || r.method === 'ALL')
-			) {
-				if (r.middleware) {
-					r.middleware(req, res, (next) => {
-						next === undefined ? isNext = true : isNext = next;
-					});
-				}
+		try {
+			for (const r of this.getRoutes()) {
+				if (
+					(`${url.pathname}/`.match(`${r.path}/`)) &&
+					(r.method === req.method || r.method === 'ALL')
+				) {
+					if (r.middleware) {
+						r.middleware(req, res, (next) => {
+							next === undefined ? isNext = true : isNext = next;
+						});
+					}
 
-				if (!isNext) {
+					if (!isNext) {
+						break;
+					}
+
+					r.handler(
+						Object.assign(req, { middleware: r.middleware?.name }),
+						res,
+					);
+					isRoute = true;
 					break;
 				}
-
-				r.handler(
-					Object.assign(req, { middleware: r.middleware?.name }),
-					res,
-				);
-				break;
 			}
+		} catch (error) {
+			res.status(500).send({
+				statusCode: 500,
+				message: 'Internal Error',
+				error: error
+			})
+			isRoute = true;
 		}
+
+		if (!isRoute) {
+			res.status(404).send({
+				statusCode: 404,
+				message: 'Not Found',
+				error: 'This route doesn\'t exist'
+			})
+		}
+
 		return new Response(objRes.body as BodyInit, {
 			status: objRes.status,
 			headers: objRes.headers,
