@@ -1,19 +1,19 @@
-export interface RouterBody {
+interface RouterBody {
 	path: string;
 	method: string;
-	middleware?: Middleware;
+	middlewares?: MiddlewareBody[];
 	handler: Callback;
 }
 
-interface UseBody {
+interface MiddlewareBody {
 	path: string;
 	middleware: Middleware;
 }
 
 export type RequestCosmic = Request & IMiddleware;
 
-export interface IMiddleware {
-	middleware?: string;
+interface IMiddleware {
+	middlewares?: MiddlewareBody[];
 }
 
 export interface ResponseCosmic {
@@ -40,7 +40,7 @@ type Callback = (req: RequestCosmic, res: ResponseCosmic) => void;
 
 export class Router {
 	private routes: RouterBody[] = [];
-	private middlewares: UseBody[] = [];
+	private middlewares: MiddlewareBody[] = [];
 
 	public get(path: string, middleware: Middleware | Callback, callback?: Callback): RouterBody {
 		return this.request('GET', path, middleware, callback);
@@ -70,21 +70,15 @@ export class Router {
 		return this.request('ALL', path, middleware, callback);
 	}
 
-	public use(path: string, middleware: Middleware): UseBody {
-		const useBody: UseBody = { path: path, middleware: middleware };
+	public use(path: string, middleware: Middleware): MiddlewareBody {
+		const middlewareBody: MiddlewareBody = { path: path, middleware: middleware };
 
-		if (this.routes.some((route) => route.path === path)) {
-			this.routes.forEach((route) => {
-				if (route.path == path) route.middleware = middleware;
-			});
-		} else {
-			this.middlewares.push({
-				path,
-				middleware,
-			});
-		}
+		this.middlewares.push({
+			path,
+			middleware,
+		});
 
-		return useBody;
+		return middlewareBody;
 	}
 
 	private request(
@@ -96,22 +90,19 @@ export class Router {
 		const callbackResponse = callback === undefined ? middleware : callback!;
 		const middlewareResponse = callback === undefined ? undefined : (middleware as Middleware);
 
+		if (middlewareResponse) {
+			this.middlewares.push({
+				path,
+				middleware,
+			});
+		}
+
 		const route: RouterBody = {
 			path,
 			method: method,
-			middleware: undefined,
+			middlewares: this.middlewares,
 			handler: (callbackResponse as Callback),
 		};
-
-		this.middlewares.forEach((middleware) => {
-			if (middleware.path === path) {
-				route.middleware = middleware.middleware;
-			}
-		});
-
-		if (middlewareResponse) {
-			route.middleware = middlewareResponse;
-		}
 
 		this.routes.push(route);
 
