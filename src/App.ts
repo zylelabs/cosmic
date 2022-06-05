@@ -77,18 +77,18 @@ export class App extends Router {
 					(`${url.pathname}/`.match(`${r.path}/`)) &&
 					(r.method === req.method || r.method === 'ALL')
 				) {
-					if (r.middleware) {
-						r.middleware(req, res, (next) => {
+					r.middlewares?.forEach((middlewareBody) => {
+						middlewareBody.middleware(req, res, (next) => {
 							next === undefined ? isNext = true : isNext = next;
 						});
-					}
+					});
 
 					if (!isNext) {
 						break;
 					}
 
 					r.handler(
-						Object.assign(req, { middleware: r.middleware?.name }),
+						Object.assign(req, { middlewares: r.middlewares }),
 						res,
 					);
 					isRoute = true;
@@ -99,8 +99,8 @@ export class App extends Router {
 			res.status(500).send({
 				statusCode: 500,
 				message: 'Internal Error',
-				error: error
-			})
+				error: error,
+			});
 			isRoute = true;
 		}
 
@@ -108,8 +108,8 @@ export class App extends Router {
 			res.status(404).send({
 				statusCode: 404,
 				message: 'Not Found',
-				error: 'This route doesn\'t exist'
-			})
+				error: 'This route doesn\'t exist',
+			});
 		}
 
 		return new Response(objRes.body as BodyInit, {
