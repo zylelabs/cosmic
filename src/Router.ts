@@ -22,6 +22,14 @@ export interface ResponseCosmic {
 	send: (body: Body) => void;
 }
 
+export interface RouterOptions {
+	prefix: string;
+}
+
+export interface MethodOptions {
+	hasPrefix: boolean;
+}
+
 type Method =
 	| 'ALL'
 	| 'GET'
@@ -41,36 +49,68 @@ type Callback = (req: RequestCosmic, res: ResponseCosmic) => void;
 export class Router {
 	private routes: RouterBody[] = [];
 	private middlewares: MiddlewareBody[] = [];
+	private prefix: string | undefined;
 
-	public get(path: string, middleware: Middleware | Callback, callback?: Callback): RouterBody {
-		return this.request('GET', path, middleware, callback);
+	constructor(options?: RouterOptions) {
+		this.prefix = options?.prefix;
 	}
 
-	public post(path: string, middleware: Middleware | Callback, callback?: Callback): RouterBody {
-		return this.request('POST', path, middleware, callback);
+	public get(
+		path: string,
+		options: MethodOptions | Middleware | Callback,
+		middleware?: Middleware | Callback,
+		callback?: Callback,
+	): RouterBody {
+		return this.request('GET', path, options, middleware, callback);
 	}
 
-	public put(path: string, middleware: Middleware | Callback, callback?: Callback): RouterBody {
-		return this.request('PUT', path, middleware, callback);
+	public post(
+		path: string,
+		options: MethodOptions | Middleware | Callback,
+		middleware?: Middleware | Callback,
+		callback?: Callback,
+	): RouterBody {
+		return this.request('POST', path, options, middleware, callback);
 	}
 
-	public patch(path: string, middleware: Middleware | Callback, callback?: Callback): RouterBody {
-		return this.request('PATCH', path, middleware, callback);
+	public put(
+		path: string,
+		options: MethodOptions | Middleware | Callback,
+		middleware?: Middleware | Callback,
+		callback?: Callback,
+	): RouterBody {
+		return this.request('PUT', path, options, middleware, callback);
+	}
+
+	public patch(
+		path: string,
+		options: MethodOptions | Middleware | Callback,
+		middleware?: Middleware | Callback,
+		callback?: Callback,
+	): RouterBody {
+		return this.request('PATCH', path, options, middleware, callback);
 	}
 
 	public delete(
 		path: string,
-		middleware: Middleware | Callback,
+		options: MethodOptions | Middleware | Callback,
+		middleware?: Middleware | Callback,
 		callback?: Callback,
 	): RouterBody {
-		return this.request('DELETE', path, middleware, callback);
+		return this.request('DELETE', path, options, middleware, callback);
 	}
 
-	public all(path: string, middleware: Middleware | Callback, callback?: Callback): RouterBody {
-		return this.request('ALL', path, middleware, callback);
+	public all(
+		path: string,
+		options: MethodOptions | Middleware | Callback,
+		middleware?: Middleware | Callback,
+		callback?: Callback,
+	): RouterBody {
+		return this.request('ALL', path, options, middleware, callback);
 	}
 
-	public use(path: string, middleware: Middleware): MiddlewareBody {
+	public use(dirPath: string, middleware: Middleware): MiddlewareBody {
+		const path = this.prefix ? this.prefix + dirPath : dirPath;
 		const middlewareBody: MiddlewareBody = { path: path, middleware: middleware };
 
 		this.middlewares.push({
@@ -83,17 +123,25 @@ export class Router {
 
 	private request(
 		method: Method,
-		path: string,
-		middleware: Middleware | Callback,
+		dirPath: string,
+		options: MethodOptions | Middleware | Callback,
+		middleware?: Middleware | Callback,
 		callback?: Callback,
 	): RouterBody {
-		const callbackResponse = callback === undefined ? middleware : callback!;
-		const middlewareResponse = callback === undefined ? undefined : (middleware as Middleware);
+		const optionsResponse = callback ? options : middleware ? options : undefined;
+		const middlewareResponse = middleware === undefined ? undefined : callback ? middleware : options;
+		const callbackResponse = callback ? callback : middleware === undefined ? options : middleware;
 
-		if (middlewareResponse) {
+		let path = dirPath;
+
+		if (optionsResponse && typeof optionsResponse === 'object') {
+			path = this.prefix ? this.prefix + dirPath : dirPath;
+		}
+
+		if (middlewareResponse && typeof middlewareResponse === 'function') {
 			this.middlewares.push({
 				path,
-				middleware,
+				middleware: middlewareResponse as Middleware,
 			});
 		}
 

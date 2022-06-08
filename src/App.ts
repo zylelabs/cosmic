@@ -65,9 +65,7 @@ export class App extends Router {
 				objRes.headers[obj] = value as string;
 			},
 			send: (bodyResponse: Body) => {
-				objRes.body = typeof bodyResponse === 'object'
-					? JSON.stringify(bodyResponse)
-					: bodyResponse;
+				objRes.body = typeof bodyResponse === 'object' ? JSON.stringify(bodyResponse) : bodyResponse;
 			},
 		};
 
@@ -101,6 +99,9 @@ export class App extends Router {
 				message: 'Internal Error',
 				error: error,
 			});
+
+			console.log(error);
+
 			isRoute = true;
 		}
 

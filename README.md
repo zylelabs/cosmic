@@ -20,7 +20,7 @@ app.get('/', (_req: RequestCosmic, res: ResponseCosmic) => {
 	res.send({ Hello: 'World' });
 });
 
-app.listen(3000, (server) => {
+app.listen(3000, 'localhost', (server) => {
 	console.log(`Application running on http://${server.hostname}:${server.port}/`);
 });
 ```
