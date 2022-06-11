@@ -1,21 +1,41 @@
 import { Body, ResponseCosmic, Router } from './Router.ts';
 
-type ListenCallback = (options: { port?: number; hostname?: string }) => void;
+type ListenCallback = (listenOptions: ListenResponseCallback) => void;
+
+interface ListenResponseCallback extends ListenOptions {
+	port: number;
+}
+
+interface ListenOptions {
+	hostname?: string;
+}
 
 export class App extends Router {
-	public listen(port: number, hostname: string | ListenCallback, callback?: ListenCallback) {
-		const normalizeHostname = callback === undefined ? '0.0.0.0' : hostname;
-		const serverOptions = {
-			...{ port: 3000, hostname: '0.0.0.0' },
-			...{ port: port, hostname: (normalizeHostname as string) },
+	public listen(port: number, options: string | ListenOptions | ListenCallback, callback?: ListenCallback) {
+		let listenOptions: ListenOptions = {
+			...{ hostname: '0.0.0.0' },
 		};
 
-		this.serve(Deno.listen(serverOptions));
+		if (typeof options === 'string') {
+			listenOptions = {
+				...{ hostname: (options as string) },
+			};
+		}
 
-		if (callback === undefined) {
-			(hostname as ListenCallback)(serverOptions);
+		if (typeof options === 'object') {
+			listenOptions = {
+				...options,
+			};
+		}
+
+		listenOptions.hostname = listenOptions.hostname === undefined ? '0.0.0.0' : listenOptions.hostname;
+
+		this.serve(Deno.listen({ hostname: listenOptions.hostname, port: port }));
+
+		if (typeof options === 'function') {
+			(options as ListenCallback)({ ...listenOptions, ...{ port: port } });
 		} else {
-			callback?.(serverOptions);
+			callback?.({ ...listenOptions, ...{ port: port } });
 		}
 	}
 
