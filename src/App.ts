@@ -1,4 +1,9 @@
-import { Body, ResponseCosmic, Router } from './Router.ts';
+import RouterManager from './router/RouterManager.ts';
+import { Router } from './router/Router.ts';
+import { NativeServer } from './native/NativeServer.ts';
+import { NativeResponse } from './native/NativeResponse.ts';
+import { ResponseCosmic } from './router/ResponseCosmic.ts';
+import { RequestCosmic } from '../types.d.ts';
 
 type ListenCallback = (listenOptions: ListenResponseCallback) => void;
 
@@ -47,7 +52,8 @@ export class App extends Router {
 
 					try {
 						for await (const event of httpConn) {
-							await event.respondWith(this.handler(event.request));
+							const nativeServer = new NativeServer();
+							this.handle(await nativeServer.received(event));
 						}
 					} catch (error) {
 						console.log('ListenerError', error);
@@ -59,83 +65,39 @@ export class App extends Router {
 		}
 	}
 
-	private handler(req: Request): Response {
-		const url = new URL(req.url);
+	private handle(req: RequestCosmic) {
+		let response: ResponseCosmic | undefined = undefined;
 
-		let isNext = true;
-		let isRoute = false;
-
-		const objRes = {
-			body: undefined as Body,
-			status: 200,
-			headers: {} as Record<string, string>,
-		};
-
-		const res: ResponseCosmic = {
-			status: (statusCode: number) => {
-				objRes.status = statusCode;
-				return res;
-			},
-			set: (obj: Record<string, string> | string, value?: string) => {
-				if (typeof obj === 'object') {
-					Object.assign(objRes.headers, obj);
-					return;
-				}
-
-				objRes.headers[obj] = value as string;
-			},
-			send: (bodyResponse: Body) => {
-				objRes.body = typeof bodyResponse === 'object' ? JSON.stringify(bodyResponse) : bodyResponse;
-			},
-		};
+		const nativeRequest = new NativeResponse();
 
 		try {
-			for (const r of this.getRoutes()) {
-				if (
-					(`${url.pathname}/`.match(`${r.path}/`)) &&
-					(r.method === req.method || r.method === 'ALL')
-				) {
-					r.middlewares?.forEach((middlewareBody) => {
-						middlewareBody.middleware(req, res, (next) => {
-							next === undefined ? isNext = true : isNext = next;
-						});
-					});
+			RouterManager.check(this, req, (route, res) => {
+				route.handler(req, res);
 
-					if (!isNext) {
-						break;
-					}
+				nativeRequest
+					.setBody(res.getResponse().body)
+					.setStatus(res.getResponse().status)
+					.setHeaders(res.getResponse().headers);
 
-					r.handler(
-						Object.assign(req, { middlewares: r.middlewares }),
-						res,
-					);
-					isRoute = true;
-					break;
-				}
+				response = res;
+			});
+
+			if (!response) {
+				nativeRequest.setBody(JSON.stringify({
+					statusCode: 404,
+					message: 'Not Found',
+					error: 'This route doesn\t exist',
+				})).setStatus(404);
 			}
 		} catch (error) {
-			res.status(500).send({
+			nativeRequest.setBody(JSON.stringify({
 				statusCode: 500,
 				message: 'Internal Error',
 				error: error,
-			});
+			})).setStatus(500);
 
 			console.log(error);
-
-			isRoute = true;
 		}
-
-		if (!isRoute) {
-			res.status(404).send({
-				statusCode: 404,
-				message: 'Not Found',
-				error: 'This route doesn\'t exist',
-			});
-		}
-
-		return new Response(objRes.body as BodyInit, {
-			status: objRes.status,
-			headers: objRes.headers,
-		});
+		req._event.respondWith(nativeRequest.getResponse());
 	}
 }
