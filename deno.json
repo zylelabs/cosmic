@@ -1,5 +1,8 @@
 {
 	"fmt": {
+		"files": {
+			"exclude": ["CODE_OF_CONDUCT.md", "LICENSE"]
+		},
 		"options": {
 			"useTabs": true,
 			"lineWidth": 110,

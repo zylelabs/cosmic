@@ -1,7 +1,8 @@
 export * from './src/App.ts';
-export * from './src/Router.ts';
+export * from './src/router/Router.ts';
 
 export { App } from './src/App.ts';
-export { Router } from './src/Router.ts';
+export { Router } from './src/router/Router.ts';
+export { ResponseCosmic } from './src/router/ResponseCosmic.ts';
 
-export type { Middleware, Next, RequestCosmic, ResponseCosmic } from './src/Router.ts';
+export type { Next, RequestCosmic } from './types.d.ts';
