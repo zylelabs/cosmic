@@ -1,8 +1,11 @@
-interface RouterBody {
+import { ResponseCosmic } from './ResponseCosmic.ts';
+import { Next, RequestCosmic } from '../../types.d.ts';
+
+export interface RouterBody {
 	path: string;
 	method: string;
 	middlewares?: MiddlewareBody[];
-	handler: Callback;
+	handler: (req: RequestCosmic, res: ResponseCosmic) => void;
 }
 
 interface MiddlewareBody {
@@ -10,25 +13,16 @@ interface MiddlewareBody {
 	middleware: Middleware;
 }
 
-export type RequestCosmic = Request & IMiddleware;
-
-interface IMiddleware {
-	middlewares?: MiddlewareBody[];
-}
-
-export interface ResponseCosmic {
-	status: (statusCode: number) => Omit<ResponseCosmic, 'status'>;
-	set: (obj: Record<string, string> | string, value?: string) => void;
-	send: (body: Body) => void;
-}
-
-export interface RouterOptions {
+interface RouterOptions {
 	prefix: string;
 }
 
-export interface MethodOptions {
+interface MethodOptions {
 	hasPrefix: boolean;
 }
+
+type RouterCallback = (req: RequestCosmic, res: ResponseCosmic) => void;
+type Middleware = (req: RequestCosmic, res: ResponseCosmic, next: Next) => void;
 
 type Method =
 	| 'ALL'
@@ -37,14 +31,6 @@ type Method =
 	| 'PUT'
 	| 'PATCH'
 	| 'DELETE';
-
-export type Body = BodyInit | JSON | Record<string | number, unknown> | null | undefined | unknown;
-
-export type Next = (pass?: boolean) => void;
-
-export type Middleware = (req: RequestCosmic, res: ResponseCosmic, next: Next) => void;
-
-type Callback = (req: RequestCosmic, res: ResponseCosmic) => void;
 
 export class Router {
 	private routes: RouterBody[] = [];
@@ -57,55 +43,55 @@ export class Router {
 
 	public get(
 		path: string,
-		options: MethodOptions | Middleware | Callback,
-		middleware?: Middleware | Callback,
-		callback?: Callback,
-	): RouterBody {
+		options: MethodOptions | Middleware | RouterCallback,
+		middleware?: Middleware | RouterCallback,
+		callback?: RouterCallback,
+	) {
 		return this.request('GET', path, options, middleware, callback);
 	}
 
 	public post(
 		path: string,
-		options: MethodOptions | Middleware | Callback,
-		middleware?: Middleware | Callback,
-		callback?: Callback,
-	): RouterBody {
+		options: MethodOptions | Middleware | RouterCallback,
+		middleware?: Middleware | RouterCallback,
+		callback?: RouterCallback,
+	) {
 		return this.request('POST', path, options, middleware, callback);
 	}
 
 	public put(
 		path: string,
-		options: MethodOptions | Middleware | Callback,
-		middleware?: Middleware | Callback,
-		callback?: Callback,
-	): RouterBody {
+		options: MethodOptions | Middleware | RouterCallback,
+		middleware?: Middleware | RouterCallback,
+		callback?: RouterCallback,
+	) {
 		return this.request('PUT', path, options, middleware, callback);
 	}
 
 	public patch(
 		path: string,
-		options: MethodOptions | Middleware | Callback,
-		middleware?: Middleware | Callback,
-		callback?: Callback,
-	): RouterBody {
+		options: MethodOptions | Middleware | RouterCallback,
+		middleware?: Middleware | RouterCallback,
+		callback?: RouterCallback,
+	) {
 		return this.request('PATCH', path, options, middleware, callback);
 	}
 
 	public delete(
 		path: string,
-		options: MethodOptions | Middleware | Callback,
-		middleware?: Middleware | Callback,
-		callback?: Callback,
-	): RouterBody {
+		options: MethodOptions | Middleware | RouterCallback,
+		middleware?: Middleware | RouterCallback,
+		callback?: RouterCallback,
+	) {
 		return this.request('DELETE', path, options, middleware, callback);
 	}
 
 	public all(
 		path: string,
-		options: MethodOptions | Middleware | Callback,
-		middleware?: Middleware | Callback,
-		callback?: Callback,
-	): RouterBody {
+		options: MethodOptions | Middleware | RouterCallback,
+		middleware?: Middleware | RouterCallback,
+		callback?: RouterCallback,
+	) {
 		return this.request('ALL', path, options, middleware, callback);
 	}
 
@@ -124,10 +110,10 @@ export class Router {
 	private request(
 		method: Method,
 		dirPath: string,
-		options: MethodOptions | Middleware | Callback,
-		middleware?: Middleware | Callback,
-		callback?: Callback,
-	): RouterBody {
+		options: MethodOptions | Middleware | RouterCallback,
+		middleware?: Middleware | RouterCallback,
+		callback?: RouterCallback,
+	) {
 		const optionsResponse = callback ? options : middleware ? options : undefined;
 		const middlewareResponse = middleware === undefined ? undefined : callback ? middleware : options;
 		const callbackResponse = callback ? callback : middleware === undefined ? options : middleware;
@@ -149,7 +135,7 @@ export class Router {
 			path,
 			method: method,
 			middlewares: this.middlewares,
-			handler: (callbackResponse as Callback),
+			handler: (callbackResponse as RouterCallback),
 		};
 
 		this.routes.push(route);
