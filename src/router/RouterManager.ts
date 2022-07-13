@@ -4,22 +4,22 @@ import { RequestCosmic } from '../../types.d.ts';
 import { App } from './../App.ts';
 
 class RouterManager {
-	public check(
+	public async check(
 		app: App,
 		request: RequestCosmic,
-		callback: (route: RouterBody, response: ResponseCosmic) => void,
+		callback: (route: RouterBody, response: ResponseCosmic) => Promise<void>,
 	) {
 		let isNext = true;
 		const response = new ResponseCosmic();
 
 		for (const route of app.getRoutes()) {
 			if (
-				(`${request.url}/`.match(`${route.path}/`)) &&
+				`${request.url}/`.match(`${route.path}/`) &&
 				(route.method === request.method || route.method === 'ALL')
 			) {
 				route.middlewares?.forEach((middlewareBody) => {
 					middlewareBody.middleware(request, response, (next) => {
-						next === undefined ? isNext = true : isNext = next;
+						next === undefined ? (isNext = true) : (isNext = next);
 					});
 				});
 
@@ -27,7 +27,7 @@ class RouterManager {
 					break;
 				}
 
-				callback(route, response);
+				await callback(route, response);
 
 				break;
 			}

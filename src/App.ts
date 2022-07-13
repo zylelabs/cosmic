@@ -16,14 +16,18 @@ interface ListenOptions {
 }
 
 export class App extends Router {
-	public listen(port: number, options: string | ListenOptions | ListenCallback, callback?: ListenCallback) {
+	public listen(
+		port: number,
+		options: string | ListenOptions | ListenCallback,
+		callback?: ListenCallback,
+	) {
 		let listenOptions: ListenOptions = {
 			...{ hostname: '0.0.0.0' },
 		};
 
 		if (typeof options === 'string') {
 			listenOptions = {
-				...{ hostname: (options as string) },
+				...{ hostname: options as string },
 			};
 		}
 
@@ -65,14 +69,14 @@ export class App extends Router {
 		}
 	}
 
-	private handle(req: RequestCosmic) {
+	private async handle(req: RequestCosmic) {
 		let response: ResponseCosmic | undefined = undefined;
 
 		const nativeRequest = new NativeResponse();
 
 		try {
-			RouterManager.check(this, req, (route, res) => {
-				route.handler(req, res);
+			await RouterManager.check(this, req, async (route, res) => {
+				await route.handler(req, res);
 
 				nativeRequest
 					.setBody(res.getResponse().body)
@@ -83,18 +87,26 @@ export class App extends Router {
 			});
 
 			if (!response) {
-				nativeRequest.setBody(JSON.stringify({
-					statusCode: 404,
-					message: 'Not Found',
-					error: 'This route doesn\t exist',
-				})).setStatus(404);
+				nativeRequest
+					.setBody(
+						JSON.stringify({
+							statusCode: 404,
+							message: 'Not Found',
+							error: 'This route doesn\t exist',
+						}),
+					)
+					.setStatus(404);
 			}
 		} catch (error) {
-			nativeRequest.setBody(JSON.stringify({
-				statusCode: 500,
-				message: 'Internal Error',
-				error: error,
-			})).setStatus(500);
+			nativeRequest
+				.setBody(
+					JSON.stringify({
+						statusCode: 500,
+						message: 'Internal Error',
+						error: error,
+					}),
+				)
+				.setStatus(500);
 
 			console.log(error);
 		}
