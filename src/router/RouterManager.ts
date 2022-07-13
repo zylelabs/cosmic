@@ -7,7 +7,7 @@ class RouterManager {
 	public async check(
 		app: App,
 		request: RequestCosmic,
-		callback: (route: RouterBody, response: ResponseCosmic) => Promise<void>,
+		callback: (route: RouterBody, response: ResponseCosmic) => Promise<void> | void
 	) {
 		let isNext = true;
 		const response = new ResponseCosmic();
