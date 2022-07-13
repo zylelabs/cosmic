@@ -5,7 +5,7 @@ export interface RouterBody {
 	path: string;
 	method: string;
 	middlewares?: MiddlewareBody[];
-	handler: (req: RequestCosmic, res: ResponseCosmic) => void;
+	handler: (req: RequestCosmic, res: ResponseCosmic) => Promise<void>;
 }
 
 interface MiddlewareBody {
@@ -21,16 +21,10 @@ interface MethodOptions {
 	hasPrefix: boolean;
 }
 
-type RouterCallback = (req: RequestCosmic, res: ResponseCosmic) => void;
-type Middleware = (req: RequestCosmic, res: ResponseCosmic, next: Next) => void;
+type RouterCallback = (req: RequestCosmic, res: ResponseCosmic) => Promise<void>;
+type Middleware = (req: RequestCosmic, res: ResponseCosmic, next: Next) => Promise<void>;
 
-type Method =
-	| 'ALL'
-	| 'GET'
-	| 'POST'
-	| 'PUT'
-	| 'PATCH'
-	| 'DELETE';
+type Method = 'ALL' | 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 export class Router {
 	private routes: RouterBody[] = [];
@@ -135,7 +129,7 @@ export class Router {
 			path,
 			method: method,
 			middlewares: this.middlewares,
-			handler: (callbackResponse as RouterCallback),
+			handler: callbackResponse as RouterCallback,
 		};
 
 		this.routes.push(route);
