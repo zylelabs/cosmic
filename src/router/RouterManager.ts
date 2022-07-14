@@ -7,29 +7,31 @@ class RouterManager {
 	public async check(
 		app: App,
 		request: RequestCosmic,
-		callback: (route: RouterBody, response: ResponseCosmic) => Promise<void> | void
+		callback: (
+			route: RouterBody,
+			response: ResponseCosmic,
+			isMiddleware: boolean
+		) => Promise<void> | void
 	) {
-		let isNext = true;
 		const response = new ResponseCosmic();
+		let isNext = true;
 
 		for (const route of app.getRoutes()) {
 			if (
 				`${request.url}/`.match(`${route.path}/`) &&
 				(route.method === request.method || route.method === 'ALL')
 			) {
-				route.middlewares?.forEach((middlewareBody) => {
-					middlewareBody.middleware(request, response, (next) => {
+				route.middlewares?.forEach(async (middlewareBody) => {
+					await middlewareBody.middleware(request, response, (next) => {
 						next === undefined ? (isNext = true) : (isNext = next);
 					});
 				});
 
 				if (!isNext) {
-					break;
+					return await callback(route, response, true);
 				}
 
-				await callback(route, response);
-
-				break;
+				return await callback(route, response, false);
 			}
 		}
 	}
