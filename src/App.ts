@@ -75,8 +75,10 @@ export class App extends Router {
 		const nativeRequest = new NativeResponse();
 
 		try {
-			await RouterManager.check(this, req, async (route, res) => {
-				await route.handler(req, res);
+			await RouterManager.check(this, req, async (route, res, isMiddleware) => {
+				if (!isMiddleware) {
+					await route.handler(req, res);
+				}
 
 				nativeRequest
 					.setBody(res.getResponse().body)
@@ -110,6 +112,7 @@ export class App extends Router {
 
 			console.log(error);
 		}
+
 		req._event.respondWith(nativeRequest.getResponse());
 	}
 }
