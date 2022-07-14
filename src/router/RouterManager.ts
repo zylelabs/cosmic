@@ -10,8 +10,8 @@ class RouterManager {
 		callback: (
 			route: RouterBody,
 			response: ResponseCosmic,
-			isMiddleware: boolean
-		) => Promise<void> | void
+			isMiddleware: boolean,
+		) => Promise<void> | void,
 	) {
 		const response = new ResponseCosmic();
 		let isNext = true;
