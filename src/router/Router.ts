@@ -128,7 +128,7 @@ export class Router {
 		const route: RouterBody = {
 			path,
 			method: method,
-			middlewares: this.middlewares,
+			middlewares: this.middlewares.filter((middleware) => middleware.path === path),
 			handler: callbackResponse as RouterCallback,
 		};
 
