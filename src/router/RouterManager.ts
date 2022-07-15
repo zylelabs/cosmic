@@ -22,9 +22,13 @@ class RouterManager {
 				(route.method === request.method || route.method === 'ALL')
 			) {
 				route.middlewares?.forEach(async (middlewareBody) => {
-					await middlewareBody.middleware(request, response, (next) => {
-						next === undefined ? (isNext = true) : (isNext = next);
-					});
+					try {
+						await middlewareBody.middleware(request, response, (next) => {
+							next === undefined ? (isNext = true) : (isNext = next);
+						});
+					} catch (error) {
+						console.log(error);
+					}
 				});
 
 				if (!isNext) {
