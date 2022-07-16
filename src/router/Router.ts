@@ -22,7 +22,8 @@ interface MethodOptions {
 }
 
 type RouterCallback = (req: RequestCosmic, res: ResponseCosmic) => Promise<void> | void;
-type Middleware = (req: RequestCosmic, res: ResponseCosmic, next: Next) => Promise<void> | void;
+
+type Middleware = (req: RequestCosmic, res: ResponseCosmic, next: Next) => Promise<void>;
 
 type Method = 'ALL' | 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
