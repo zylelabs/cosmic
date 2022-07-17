@@ -75,8 +75,8 @@ export class App extends Router {
 		const nativeRequest = new NativeResponse();
 
 		try {
-			await RouterManager.check(this, req, async (route, res, isMiddleware) => {
-				if (!isMiddleware) {
+			await RouterManager.check(this, req, async (route, res, blocked) => {
+				if (!blocked) {
 					await route.handler(req, res);
 				}
 
